@@ -976,6 +976,7 @@ func decodeTransfer(height uint32, info *event.ExecuteNotify, evt *event.NotifyE
 			}
 			res := big.NewInt(0).Mul(big.NewInt(amount), big.NewInt(constants.GWei))
 			res.Add(res, big.NewInt(value))
+			log.Infof("Inside: %d", res)
 			xfer := &transfer{
 				amount: res,
 				from:   from,
@@ -987,7 +988,7 @@ func decodeTransfer(height uint32, info *event.ExecuteNotify, evt *event.NotifyE
 			return xfer
 		}
 		xfer := &transfer{
-			amount: big.NewInt(amount),
+			amount: big.NewInt(0).Mul(big.NewInt(amount), big.NewInt(constants.GWei)),
 			from:   from,
 			to:     to,
 		}
@@ -1052,37 +1053,37 @@ func decodeTransfer(height uint32, info *event.ExecuteNotify, evt *event.NotifyE
 	}
 	xfer.amount = amount
 	/*
-	if amount.Uint64()%constants.GWei != 0 {
-		elem := reflect.ValueOf(elems[4])
-		if elem.Kind() != reflect.String {
-			log.Errorf(
-				"Ignoring event for txn %s at height %d: type(state[4]) != string",
-				info.TxHash.ToHexString(), height,
-			)
-			return nil
+		if amount.Uint64()%constants.GWei != 0 {
+			elem := reflect.ValueOf(elems[4])
+			if elem.Kind() != reflect.String {
+				log.Errorf(
+					"Ignoring event for txn %s at height %d: type(state[4]) != string",
+					info.TxHash.ToHexString(), height,
+				)
+				return nil
+			}
+			val, err := hex.DecodeString(elem.String())
+			if err != nil {
+				log.Errorf(
+					"Failed to decode state[5] for txn %s at height %d: %s",
+					info.TxHash.ToHexString(), height, err,
+				)
+				return nil
+			}
+			value := common.BigIntFromNeoBytes(val)
+			if value.Cmp(big.NewInt(0)) == -1 {
+				log.Errorf(
+					"Transfer amount for txn %s at height %d outside of expected range: %v",
+					info.TxHash.ToHexString(), height, value,
+				)
+				return nil
+			}
+			totalAmount := &big.Int{}
+			xfer.amount = totalAmount.Add(amount, value)
+		} else {
+			xfer.amount = amount
 		}
-		val, err := hex.DecodeString(elem.String())
-		if err != nil {
-			log.Errorf(
-				"Failed to decode state[5] for txn %s at height %d: %s",
-				info.TxHash.ToHexString(), height, err,
-			)
-			return nil
-		}
-		value := common.BigIntFromNeoBytes(val)
-		if value.Cmp(big.NewInt(0)) == -1 {
-			log.Errorf(
-				"Transfer amount for txn %s at height %d outside of expected range: %v",
-				info.TxHash.ToHexString(), height, value,
-			)
-			return nil
-		}
-		totalAmount := &big.Int{}
-		xfer.amount = totalAmount.Add(amount, value)
-	} else {
-		xfer.amount = amount
-	}
-	 */
+	*/
 	return xfer
 }
 
